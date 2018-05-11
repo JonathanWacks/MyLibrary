@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+  <string name="edit_library">Edit Library</string>
+  <string name="add_library">Add Library</string>
+  <string name="edit_user">Edit User</string>
+  <string name="add_user">Add User</string>
+
+</resources>
+
