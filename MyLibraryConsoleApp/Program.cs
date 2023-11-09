@@ -1,10 +1,6 @@
-﻿using Amazon;
-using Amazon.DynamoDBv2;
-using Amazon.DynamoDBv2.DocumentModel;
 using MyLibrary;
 using System;
-using System.Collections.Generic;
-using System.Drawing;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -135,58 +131,126 @@ namespace MyLibraryConsoleApp
             //var image = Image.FromStream(stream);
             //image.Save("test.jpg");
             var users = new SpydusUser[6];
-            users[0] = new SpydusUser("D9999010826037", "0205", "manchester", tracingService);
-            users[1] = new SpydusUser("D9999010723465", "0604", "manchester", tracingService);
-            users[2] = new SpydusUser("D9999010821966", "2017", "manchester", tracingService);
-            users[3] = new SpydusUser("D9999010826041", "0605", "manchester", tracingService);
-            users[4] = new SpydusUser("D9999010586089", "0304", "manchester", tracingService);
-            users[5] = new SpydusUser("D9999010780037", "2104", "manchester", tracingService);
 
-            //users[0] = new SpydusUser("000252967X", "5741", "salfordlibraries", tracingService);
-            //users[1] = new SpydusUser("0002554887", "2011", "salfordlibraries", tracingService);
-            //users[2] = new SpydusUser("0002554631", "2013", "salfordlibraries", tracingService);
-            //users[3] = new SpydusUser("000286388X", "2017", "salfordlibraries", tracingService);
-            //users[4] = new SpydusUser("0003252205", "2020", "salfordlibraries", tracingService);
-            //users[5] = new SpydusUser("0003341127", "1986", "salfordlibraries", tracingService);
+            while (true)
+            {
+                var library = string.Empty;
+                do
+                {
+                    Console.Write("Enter (s)alford or (m)anchester, or (q)uit: ");
+                    library = Console.ReadLine();
+                } while (library != "m" && library != "s" && library != "q");
 
-            //using (var f = File.Create("books.txt"))
-            //{
-            //    using (var bs = new StreamWriter(f))
-            //    {
-            foreach (var user in users)
+                if (library == "q")
+                {
+                    return;
+                }
+
+                if (library == "m")
+                {
+                    users[0] = new SpydusUser("D9999010826037", "0205", "manchester", tracingService);
+                    users[1] = new SpydusUser("D9999010723465", "0604", "manchester", tracingService);
+                    users[2] = new SpydusUser("D9999010821966", "2017", "manchester", tracingService);
+                    users[3] = new SpydusUser("D9999010826041", "0605", "manchester", tracingService);
+                    users[4] = new SpydusUser("D9999010586089", "0304", "manchester", tracingService);
+                    users[5] = new SpydusUser("D9999010780037", "2104", "manchester", tracingService);
+                }
+
+                if (library == "s")
+                {
+                    users[0] = new SpydusUser("000252967X", "5741", "salfordlibraries", tracingService);
+                    users[1] = new SpydusUser("0002554887", "2011", "salfordlibraries", tracingService);
+                    users[2] = new SpydusUser("0002554631", "2013", "salfordlibraries", tracingService);
+                    users[3] = new SpydusUser("000286388X", "2017", "salfordlibraries", tracingService);
+                    users[4] = new SpydusUser("0003252205", "2020", "salfordlibraries", tracingService);
+                    users[5] = new SpydusUser("0003341127", "1986", "salfordlibraries", tracingService);
+                }
+
+                var action = string.Empty;
+
+                do
+                {
+                    Console.Write("Please enter (d)isplay or (p)rint or (r)enew or (q)uit: ");
+                    action = Console.ReadLine();
+                } while (action != "d" && action != "r" && action != "q" && action !="p");
+
+                if (action == "q")
+                {
+                    return;
+                }
+
+
+                StreamWriter f = null;
+                if(action == "p")
+                {
+                    f = new StreamWriter(File.Create("output.txt"));
+                }
+                //using (var f = File.Create("books.txt"))
+                //{
+                //    using (var bs = new StreamWriter(f))
+                //    {
+                foreach (var user in users)
+                {
+                    user.LoginAsync().Wait();
+                    user.GetAccountAsync().Wait();
+                    var books = user.GetBooksAsync().Result;
+
+                    if (!books.Any())
                     {
-                        user.LoginAsync().Wait();
-                        user.GetAccountAsync().Wait();
-                var books = user.GetBooksAsync().Result;
+                        Console.WriteLine("no books");
+                    }
 
-                if(!books.Any())
-                {
-                    Console.WriteLine("no books");
+                    if (action == "d" || action == "p")
+                    {
+                        foreach (var book in books)
+                        {
+                            if (action == "d")
+                            {
+                                Console.WriteLine(book.DueDate.ToShortDateString() + ": " + book.Title);
+                            }
+
+                            if(action == "p")
+                            {
+                                f.WriteLine(book.DueDate.ToShortDateString() + ": " + book.Title);
+                            }
+                        }
+                    }
+
+                    if (action == "r")
+                    {
+                        RenewLateBooks(user);
+                    }
                 }
 
-                foreach (var book in books)
+                if(action == "p")
                 {
-                    Console.WriteLine(book.DueDate + ": " + book.Title);
-                }
+                    f.Flush();
+                    f.Close();
 
-                
-                //RenewLateBooks(user);
+                    var psi = new ProcessStartInfo("output.txt");
+                    psi.Verb = "PRINT";
+
+                    var process = Process.Start(psi);
+                    process.WaitForExit();
+
+                    File.Delete("output.txt");
+                }
+                //    }
+                //}
+                ////var salford = new BuryUser("Jonathan", "Wacks", "5000720888", "TCoM1Tlf2");
+                //var books = meAtSalford.Books;
+
+                //DisplayBooks(books);
+
+                //meAtSalford.RenewBooks(books.Books.Skip(8).Take(2).ToArray());
+                //meAtSalford.RenewAll();
+
+                //books = meAtSalford.GetCheckedOutBooks();
+                //var malcaBooks = malcaAtSalford.Books;
+                //DisplayBooks(malcaBooks);
+
+                //RenewLateBooks(asherAtSalford);  
             }
-            //    }
-            //}
-            ////var salford = new BuryUser("Jonathan", "Wacks", "5000720888", "TCoM1Tlf2");
-            //var books = meAtSalford.Books;
-
-            //DisplayBooks(books);
-
-            //meAtSalford.RenewBooks(books.Books.Skip(8).Take(2).ToArray());
-            //meAtSalford.RenewAll();
-
-            //books = meAtSalford.GetCheckedOutBooks();
-            //var malcaBooks = malcaAtSalford.Books;
-            //DisplayBooks(malcaBooks);
-
-            //RenewLateBooks(asherAtSalford);
         }
 
         //private static void RenewLateBooks(params SpydusUser[] users)
@@ -240,7 +304,7 @@ namespace MyLibraryConsoleApp
     {
         public void WriteLine(string line)
         {
-            Console.WriteLine(line);
+            //Console.WriteLine(line);
         }
     }
 }
