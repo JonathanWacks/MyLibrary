@@ -2,12 +2,13 @@
 
 namespace MyLibrary
 {
-    public interface IEntityManager<T> where T : IIdable
+    public interface IEntityManager<T> //where T : IIdable
     {
         void Add(T t);
         void Edit(T t);
-        void Delete(IId id);
+        void Delete(int id);
         IEnumerable<T> GetAll();
-        T Get(IId id);
+        T Get(int id);
+        int Count { get; }
     }
 }

@@ -37,7 +37,7 @@ namespace MyLibraryApp
             var checkedItems = _lv.GetCheckedItemIds();
             foreach (var item in checkedItems)
             {
-                MainActivity.UserManager.Delete(new SqlId((int)item));
+                MainActivity.UserManager.Delete((int)item);
             }
             _adapter.NotifyDataSetChanged();
         }
@@ -46,7 +46,13 @@ namespace MyLibraryApp
         {
             var intent = new Intent(this, typeof(EditUserActivity));
 
-            StartActivityForResult(intent, 1);
+            StartActivityForResult(intent, (int)Action.Add);
+        }
+
+        private enum Action
+        {
+            Add = 1,
+            Edit = 2
         }
 
         protected override void OnActivityResult(int requestCode, Result resultCode, Intent data)
@@ -56,20 +62,25 @@ namespace MyLibraryApp
                 var firstName = data.GetStringExtra("firstName");
                 var lastName = data.GetStringExtra("lastName");
 
-                switch (requestCode)
+                switch ((Action)requestCode)
                 {
-                    case 1:
+                    case Action.Add:
                     
-                        var userAdded = new User {FirstName = firstName, LastName = lastName};
+                        var userAdded = new User {Name = firstName
+                        //    , LastName = lastName
+                        };
                         MainActivity.UserManager.Add(userAdded);
                         Toast.MakeText(this, $"{userAdded} added", ToastLength.Short);
                         _adapter.NotifyDataSetChanged();
                     
                         break;
-                    case 2:
+                    case Action.Edit:
                     
                         var id = data.GetIntExtra("id", -1);
-                        var userEdited = new User {FirstName = firstName, LastName = lastName, Id = new SqlId(id)};
+                        var userEdited = new User {Name = firstName
+                            //, LastName = lastName
+                            //, Id = id
+                            };
                         MainActivity.UserManager.Edit(userEdited);
                         Toast.MakeText(this, $"{userEdited} updated", ToastLength.Short);
                         _adapter.NotifyDataSetChanged();
@@ -87,7 +98,7 @@ namespace MyLibraryApp
 
             intent.PutExtra("UserPosition", e.Position);
 
-            StartActivityForResult(intent, 2);
+            StartActivityForResult(intent, (int)Action.Edit);
         }
     }
 }

@@ -1,14 +1,16 @@
 ﻿namespace MyLibrary
 {
-    public class Account : IIdable
+    public class Account
     {        
         public Library Library { get; set; }
         public User User { get; set; }
-        public IId Id { get; set; }
+        public Login Login { get; set; }
 
-        public override string ToString()
+        public ILibraryUser LibraryUser
         {
-            return $"{Library}: {User}";
+            get => new SpydusUser(Login.CardNo, Login.PIN, Library.Host, null);
         }
+
+        public override string ToString() => $"{Library}: {User}";
     }
 }

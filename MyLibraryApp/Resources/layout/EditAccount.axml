@@ -14,10 +14,9 @@
             android:layout_marginRight="10dp"
             android:layout_marginBottom="6.6dp"
             android:layout_marginTop="14.6dp" />
-        <EditText
-            android:id="@+id/libraryInput"
-            android:layout_gravity="center"
-            android:layout_width="200dp"
+        <Spinner
+            android:id="@+id/libraries"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content" />
     </LinearLayout>
     <LinearLayout
@@ -29,35 +28,53 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="First name:"
+            android:text="User:"
             android:layout_marginRight="10dp"
             android:layout_marginBottom="6.6dp"
             android:layout_marginTop="14.6dp" />
-        <EditText
-            android:id="@+id/firstNameInput"
-            android:layout_gravity="center"
-            android:layout_width="200dp"
+       <Spinner
+            android:id="@+id/users"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content" />
     </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
+	<LinearLayout
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:layout_marginLeft="10dp"
+       android:layout_marginRight="10dp"
+       android:layout_marginBottom="10dp">
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
+        android:text="Card No:"
         android:layout_marginRight="10dp"
-        android:layout_marginBottom="10dp">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Last name:"
-            android:layout_marginRight="10dp"
-            android:layout_marginBottom="6.6dp"
-            android:layout_marginTop="14.6dp" />
-        <EditText
-            android:id="@+id/lastNameInput"
-            android:layout_gravity="center"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
+        android:layout_marginBottom="6.6dp"
+        android:layout_marginTop="14.6dp" />
+    <EditText
+           android:id="@+id/cardNoInput"
+           android:layout_gravity="center"
+           android:layout_width="200dp"
+           android:layout_height="wrap_content" />
+  </LinearLayout>
+		<LinearLayout
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:layout_marginLeft="10dp"
+       android:layout_marginRight="10dp"
+       android:layout_marginBottom="10dp">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PIN:"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="6.6dp"
+        android:layout_marginTop="14.6dp" />
+    <EditText
+           android:id="@+id/pinInput"
+           android:layout_gravity="center"
+           android:layout_width="200dp"
+           android:layout_height="wrap_content" />
+  </LinearLayout>
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

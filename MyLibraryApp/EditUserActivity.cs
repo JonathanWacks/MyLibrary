@@ -10,7 +10,7 @@ namespace MyLibraryApp
 	[Activity]			
 	public class EditUserActivity : Activity
 	{
-        private IId _id;
+        private int? _id;
 
         protected override void OnCreate(Bundle bundle)
 		{
@@ -34,26 +34,23 @@ namespace MyLibraryApp
 
         private void PopulateFields(int position)
         {
-            var user = MainActivity.UserManager.Get(new SqlId(position + 1));
+            var user = MainActivity.UserManager.Get(position + 1);
 
-            _id = user.Id;
+            //_id = user.Id;
 
-            FindViewById<EditText>(Resource.Id.firstNameInput).Text = user.FirstName;
-            FindViewById<EditText>(Resource.Id.lastNameInput).Text = user.LastName;
+            FindViewById<EditText>(Resource.Id.firstNameInput).Text = user.Name;
         }
 
         void OnSaveClick(object sender, EventArgs e)
 		{
-			var firstName = FindViewById<EditText>(Resource.Id.firstNameInput).Text;
-            var lastName = FindViewById<EditText>(Resource.Id.lastNameInput).Text;
+			var name = FindViewById<EditText>(Resource.Id.firstNameInput).Text;
 
             var intent = new Intent();
 
-            intent.PutExtra("firstName", firstName);
-            intent.PutExtra("lastName", lastName);
+            intent.PutExtra("name", name);
             if (_id != null)
             {
-                intent.PutExtra("id", ((SqlId)_id).Id);
+                intent.PutExtra("id", _id.Value);
             }
 
 			SetResult(Result.Ok, intent);

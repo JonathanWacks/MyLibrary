@@ -3,6 +3,6 @@
     public enum LibraryType
     {
         Spydus = 0,
-        Bury = 1
+        SirsiDynix = 1
     }
 }

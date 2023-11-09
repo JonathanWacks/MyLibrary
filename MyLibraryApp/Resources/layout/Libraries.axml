@@ -2,12 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">  
-    <ListView
-        android:id="@+id/listView"
+    android:layout_height="match_parent">
+    <android.support.v7.widget.RecyclerView
+        android:minWidth="25px"
+        android:minHeight="25px"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="wrap_content"
+        android:id="@+id/libraries" />      
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -1,190 +1,202 @@
-﻿using HtmlAgilityPack;
+﻿using Claunia.PropertyList;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace MyLibrary
 {
-    public class SpydusUser : ILibraryUser
+    public interface ITracingService
     {
-        CookieContainer _cookies = new CookieContainer();
-        private string _brwlscn_443;
-        private string _enquiryId;
-        private CheckedOutBooks _books;
+        void WriteLine(string line);
+    }
 
-        public CheckedOutBooks Books => _books;
-        private string _brwl_443;
-        private string _affiliate;
-        private string _renewAllLink;
-        private string _renewSelectionLink;
+    public partial class SpydusUser : ILibraryUser
+    {
+        private readonly HttpClient _client;               
 
-        public SpydusUser(string username, string password, string affiliate)
+        private readonly string _affiliate;
+        private readonly string _username;
+        private readonly string _password;
+        private readonly ITracingService _trace;
+        private bool _loggedIn = false;
+        private string _booksLink;
+
+        private IDictionary<string, object> Header { get; set; }
+
+        public SpydusUser(string username, string password, string affiliate, ITracingService trace)
         {
             _affiliate = affiliate;
-            var request = WebRequest.CreateHttp($"https://{_affiliate}.spydus.co.uk/cgi-bin/spydus.exe/PGM/OPAC/CCOPT/LB/2");
+            _username = username;
+            _password = password;
+            _trace = trace;
 
-            request.Method = "POST";
-
-            using (var stream = new StreamWriter(request.GetRequestStream()))
-            {
-                stream.WriteLine($"BRWLID={username}&BRWLPWD={password}&ISGLB=1&RDT=%2Fcgi-bin%2Fspydus.exe%2FMSGTRN%2FOPAC%2FBSEARCH%3FHOMEPRMS%3DGENPARAMS");
-            }
-
-            request.CookieContainer = _cookies;
-
-            var response = request.GetResponse();
-
-            var cookies = ((HttpWebResponse)response).Cookies;
-            _brwlscn_443 = cookies["BRWLSCN_443"].Value;
-            _brwl_443 = cookies["BRWL_443"].Value;
-
-            _cookies.Add(cookies);
-
-            _enquiryId = GetEnquiryId();
-
-            _books = GetCheckedOutBooks();
+             _client = new HttpClient
+             {
+                 BaseAddress = new Uri($"https://{_affiliate}.spydus.co.uk/SpydusMobileAPI/ISorcer/")
+             };
         }
 
-        private string GetEnquiryId()
+        private async Task<dynamic> CallAPI(string apiUrl, Dictionary<string, object> dataIn)
         {
-            var request = WebRequest.CreateHttp($"https://{_affiliate}.spydus.co.uk/cgi-bin/spydus.exe/ENQ/OPAC/BRWENQ/{_brwlscn_443}?QRY=%23{_brwlscn_443}&QRYTEXT=My%20details&ISGLB=0&NRECS=999");
+            var plistString = NSObject.Wrap(dataIn).ToXmlPropertyList();
 
-            request.CookieContainer = _cookies;
+            var response = await _client.PostAsync(apiUrl, new StringContent(plistString));
 
-            var response = request.GetResponse();
+            var responseXML = await (response.Content as StreamContent).ReadAsStringAsync();
 
-            var body = response.GetResponseBody();
+            // remove keys that aren't followed by a string, array or dict
+            // as the parser can't handle keys without a corresponding value
+            var fixedResponseXML = Regex.Replace(responseXML, @"<key>[^<]*<\/key>(?!<string|<array|<dict)", string.Empty);
 
-            var htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(body);
-
-            var anchor = htmlDocument.DocumentNode.SelectSingleNode("//a[@id='urltabMYDETAILS']");
-
-            return Regex.Match(anchor.Attributes["href"].Value, "/cgi-bin/spydus.exe/FULL/OPAC/BRWENQ/(.+)/").Groups[1].Value;
+            return PropertyListParser.Parse(new MemoryStream(Encoding.UTF8.GetBytes(fixedResponseXML)));
         }
-
-        private CheckedOutBooks GetCheckedOutBooks()
+        
+        public async Task LoginAsync()
         {
-            var request = WebRequest.CreateHttp($"https://{_affiliate}.spydus.co.uk/cgi-bin/spydus.exe/ENQ/OPAC/LOANRENQ/{_enquiryId}?QRY=FULL(OND01%5C{_brwl_443}%20%2B%20ONC01%5C0)%20-%20(ONS01%5CCR%20/%20ONS01%5CCRNB%20/%20ONS01%5CLR%20/%20ONS01%5CL)%20-%20OND26%5C1&SQL=LEFT%20OUTER%20JOIN%20XAT%20ON%20XAT.IRN%20%3D%20%23TBLID.IRN%20WHERE%20%23TBLID.IRN%20NOT%20IN%20(SELECT%20XAT2.IRN%20FROM%20XAT%20AS%20XAT2%20WHERE%20XAT2.IRN%20%3D%20XAT.IRN%20AND%20XAT2.NAM%20%3D%20N%27OND.EBK%27%20AND%20XAT2.VAL%20%3D%20N%271%27)&QRYTEXT=Current%20Loans&FMT=CL&SETLVL=SET&NRECS=30&SEARCH_FORM=/cgi-bin/spydus.exe/FULL/OPAC/BRWENQ/{_enquiryId}/{_brwl_443},1");
-
-            request.CookieContainer = _cookies;
-
-            var response = request.GetResponse();
-
-            var body = response.GetResponseBody();
-
-            //var htmlDocument = new HtmlWeb().Load($"https://{_affiliate}.spydus.co.uk/cgi-bin/spydus.exe/ENQ/OPAC/LOANRENQ/{_enquiryId}?QRY=FULL(OND01%5C{_brwl_443}%20%2B%20ONC01%5C0)%20-%20(ONS01%5CCR%20/%20ONS01%5CCRNB%20/%20ONS01%5CLR%20/%20ONS01%5CL)%20-%20OND26%5C1&SQL=LEFT%20OUTER%20JOIN%20XAT%20ON%20XAT.IRN%20%3D%20%23TBLID.IRN%20WHERE%20%23TBLID.IRN%20NOT%20IN%20(SELECT%20XAT2.IRN%20FROM%20XAT%20AS%20XAT2%20WHERE%20XAT2.IRN%20%3D%20XAT.IRN%20AND%20XAT2.NAM%20%3D%20N%27OND.EBK%27%20AND%20XAT2.VAL%20%3D%20N%271%27)&QRYTEXT=Current%20Loans&FMT=CL&SETLVL=SET&NRECS=30&SEARCH_FORM=/cgi-bin/spydus.exe/FULL/OPAC/BRWENQ/{_enquiryId}/{_brwl_443},1");
-
-            return GetBooksFromHtml(body);
-        }
-
-        private CheckedOutBooks GetBooksFromHtml(string body)
-        {
-            var htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(body);
-
-            var table = htmlDocument.DocumentNode.SelectSingleNode("//table");
-
-            if (table != null)
-            {
-                var bookRows = table.Descendants("tr").Skip(1);
-
-                _renewAllLink = GetRenewAllLink(htmlDocument);
-
-                _renewSelectionLink = GetRenewSelectionLink(htmlDocument);
-
-                return new CheckedOutBooks
-                {
-                    Books = bookRows.Select(GetBook),
-                    RenewAllLink = _renewAllLink,
-                    RenewSelectionLink = _renewSelectionLink
-                };
-            }
-
-            else
-            {
-                return new CheckedOutBooks
-                {
-                    Books = new List<Book>()
-                };
-            }
-        }
-
-        private string GetRenewSelectionLink(HtmlDocument htmlDocument)
-        {
-            return htmlDocument.DocumentNode.SelectSingleNode("//input[@name='RNWSEL']").Attributes["value"].Value;
-        }
-
-        private string GetRenewAllLink(HtmlDocument htmlDocument)
-        {
-            return htmlDocument.DocumentNode.SelectSingleNode("//input[@name='RNWALL']").Attributes["value"].Value;
-        }
-
-        private Book GetBook(HtmlNode row)
-        {
-            var cells = row.SelectNodes("td");
-            var svl = cells[0].SelectSingleNode("input").Attributes["value"].Value;
-            var title = cells[1].SelectSingleNode("a").InnerText;
-            var dueDate = DateTime.Parse(cells[2].InnerText);
-            var link = cells[1].SelectSingleNode("a").Attributes["href"].Value;
-            return new Book {
-                Title = title,
-                DueDate = dueDate, 
-                RenewId = $"SVL={svl}",
-                Link = link, //.Replace("about:", string.Empty), 
+            Header = new Dictionary<string, object> { 
+                { "UserIrn", "-1"},
+                { "Version", "0.0.0" }
             };
+
+            var dataIn = new Dictionary<string, object> {
+                { "Header", Header },
+                { "Data", new Dictionary<string, object> {
+                        { "Barcode", _username },
+                        { "DeviceID", "" },
+                        { "LibID", "1239" },
+                        { "Password", _password }
+                    }
+                }
+            };
+            
+            _trace?.WriteLine($"Logging in {_username}");
+            
+            var responseObject = await CallAPI("MILAuth", dataIn);
+
+            Header = new Dictionary<string, object> {
+                { "Version", responseObject["Header"]["Version"] },
+                { "UserIrn", responseObject["Header"]["UserIrn"] },
+                { "BrwdIrn", responseObject["Data"]["BrwdIrn"] },
+                { "NameIrn", responseObject["Data"]["NameIrn"] },
+                { "LocIrn", "34198968" }
+            };
+
+            _loggedIn = true;
         }
 
-        public void RenewAll()
+        public async Task GetAccountAsync()
         {
-            if(_renewAllLink == null || _renewSelectionLink == null)
+            if(!_loggedIn)
             {
-                var books = GetCheckedOutBooks();
-                _renewAllLink = books.RenewAllLink;
-                _renewSelectionLink = books.RenewSelectionLink;
-            }
-
-            var request = WebRequest.CreateHttp($"https://{_affiliate}.spydus.co.uk/cgi-bin/spydus.exe/PGM/OPAC/RFN");
-
-            request.Method = "POST";
-
-            request.CookieContainer = _cookies;
-
-            using (var stream = new StreamWriter(request.GetRequestStream()))
-            {
-                stream.WriteLine($"RFN%5DRNWALL=&RNWSEL={WebUtility.HtmlEncode(_renewSelectionLink)}&RNWALL={WebUtility.HtmlEncode(_renewAllLink)}&NREC=0");
-            }
-
-            var response = request.GetResponse();
-
-            var body = response.GetResponseBody();
-
-            _books = GetBooksFromHtml(body);
-        }
-
-        public void RenewBooks(params Book[] books)
-        {
-            var request = WebRequest.CreateHttp($"https://{_affiliate}.spydus.co.uk/cgi-bin/spydus.exe/PGM/OPAC/RFN");
-
-            request.Method = "POST";
-
-            request.CookieContainer = _cookies;
-
-            var concatenatedIds = books.Select(book => "&" + book.RenewId).Aggregate((s1, s2) => s1 + s2);
-
-            using (var stream = new StreamWriter(request.GetRequestStream()))
-            {
-                stream.WriteLine($"RFN%5DRNWSEL=&RNWSEL={WebUtility.HtmlEncode(_renewSelectionLink)}&RNWALL={WebUtility.HtmlEncode(_renewAllLink)}{concatenatedIds}");
+                throw new Exception("Not logged in");
             }
             
-            var response = request.GetResponse();
+            var dataIn = new Dictionary<string, object> {
+                { "Header", Header },
+                { "Data", new Dictionary<string, object> { } }
+            };
 
-            var body = response.GetResponseBody();
+            _trace?.WriteLine($"Getting account for {_username}");
 
-            _books = GetBooksFromHtml(body);       
+            var responseObject = await CallAPI("GetAccountSummary", dataIn);
+
+            var loans = ((IEnumerable<dynamic>)responseObject["Data"]["Groups"])
+                .Single(g => g["RowID"].Content == "LOANS");
+
+            var line = ((IEnumerable<dynamic>)loans["Lines"])
+                .Single(l => l["LineId"].Content == "CURRENT");
+
+            _booksLink = line["Link"].Content;             
         }
+
+        public async Task<IEnumerable<Book>> GetBooksAsync()
+        {
+            if (_booksLink == null)
+            {
+                throw new Exception("Not fetched account");
+            }
+
+            if(_booksLink == String.Empty)
+            {
+                return new List<Book>();
+            }
+
+            var dataIn = new Dictionary<string, object> {
+                { "Header", Header },
+                { "Data", new Dictionary<string, object> {
+                        { "QueryString", _booksLink },
+                        { "LineId", "CURRENT" }
+                    }
+                }
+            };
+
+            _trace?.WriteLine($"Getting books for {_username}");
+
+            var responseObject = await CallAPI("GetSummaryItemList", dataIn);
+
+            var records = responseObject["Data"]["Records"] as IEnumerable<dynamic>;
+
+            return records.Select(record => new Book { 
+                Title = record["Lines"]["TITLE"]["Text"].Content, 
+                DueDate = DateTime.Parse(record["Lines"]["DUE"]["Text"].Content),
+                IRN = record["IRN"].Content,
+                SmallImage = record["ImageData"].Content
+            });
+        }
+
+        public async Task<string> GetImageTokenAsync(Book book)
+        {
+            var dataIn = new Dictionary<string, object> {
+                { "Header", Header },
+                { "Data", new Dictionary<string, object> {
+                        { "LoanIrn", book.IRN },
+                        { "Provider", string.Empty }
+                    }
+                }
+            };
+
+            _trace?.WriteLine($"Getting image token for {book}");
+
+            var responseObject = await CallAPI("MILFindItemDetails", dataIn);
+
+            return responseObject["Data"]["Info"]["ImgToken"].ToString();
+        }
+
+        public async Task<Stream> GetImageStreamAsync(string imageToken)
+        {
+            _trace?.WriteLine($"Getting image for {imageToken}");
+
+            return await _client.GetStreamAsync($"MILGetImageWithToken?version=2.0.4&token={imageToken}");            
+        }        
+
+        public async Task<Renewal> RenewBookAsync(Book book)
+        {
+            var dataIn = new Dictionary<string, object> {
+                { "Header", Header },
+                { "Data", new Dictionary<string, object> {
+                        { "LoanIRN", book.IRN },
+                        { "IsCommit", "0" }
+                    }
+                }
+            };
+
+            _trace?.WriteLine($"Renewing {book}");
+
+            var responseObject = await CallAPI("RenewLoan", dataIn);
+
+            var status = int.Parse(responseObject["Data"]["RenewStatus"].Content);
+
+            return status switch {
+                0 => new FailedRenewal(responseObject["Data"]["Message"].Content),
+                1 => new SuccessfulRenewal(responseObject["Data"]["RnwTxt"].Content,DateTime.Parse(responseObject["Data"]["DUE"].Content)),
+                _ => throw new Exception($"Unknown renewal status {status}")
+            };
+        }        
     }
 }

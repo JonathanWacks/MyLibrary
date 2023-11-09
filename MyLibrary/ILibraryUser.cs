@@ -1,9 +1,21 @@
-﻿namespace MyLibrary
+﻿using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Threading.Tasks;
+
+namespace MyLibrary
 {
     public interface ILibraryUser
-    {
-        CheckedOutBooks Books { get; }
-        void RenewBooks(params Book[] book);
-        void RenewAll();
-    }
+    {        
+        Task LoginAsync();
+        Task GetAccountAsync();
+
+        Task<IEnumerable<Book>> GetBooksAsync();
+
+        Task<string> GetImageTokenAsync(Book book);
+
+        Task<Stream> GetImageStreamAsync(string imageToken);
+
+        Task<Renewal> RenewBookAsync(Book book);
+    }    
 }

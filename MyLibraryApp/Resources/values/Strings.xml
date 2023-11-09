@@ -5,6 +5,8 @@
   <string name="add_library">Add Library</string>
   <string name="edit_user">Edit User</string>
   <string name="add_user">Add User</string>
-
+  <string name="edit_account">Edit Account</string>
+  <string name="add_account">Add Account</string>
+	<string name="database_name">mylibrary</string>
 </resources>
 

@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLibrary", "MyLibrary\MyLibrary.csproj", "{536D988D-97D2-411A-B1DA-15CA5169F318}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLibraryConsoleApp", "MyLibraryConsoleApp\MyLibraryConsoleApp.csproj", "{4B3D99D9-4A51-4BDB-9CDF-4FADE1FB6968}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyLibraryApp", "MyLibraryApp\MyLibraryApp.csproj", "{52B4EA4A-9FF7-4039-98FD-639834F1A298}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyLibraryAlexa", "MyLibraryAlexa\MyLibraryAlexa.csproj", "{63C3D27A-952F-4D2B-9BC1-6D2C22868DC6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,8 +31,15 @@ Global
 		{52B4EA4A-9FF7-4039-98FD-639834F1A298}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52B4EA4A-9FF7-4039-98FD-639834F1A298}.Release|Any CPU.Build.0 = Release|Any CPU
 		{52B4EA4A-9FF7-4039-98FD-639834F1A298}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{63C3D27A-952F-4D2B-9BC1-6D2C22868DC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63C3D27A-952F-4D2B-9BC1-6D2C22868DC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63C3D27A-952F-4D2B-9BC1-6D2C22868DC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63C3D27A-952F-4D2B-9BC1-6D2C22868DC6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {51236039-F7D2-41DA-B1B6-0F4E8E68903F}
 	EndGlobalSection
 EndGlobal
