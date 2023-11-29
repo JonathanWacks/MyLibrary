@@ -130,16 +130,16 @@ namespace MyLibraryConsoleApp
             //var stream = asherAtSalford.GetImageStreamAsync(imageToken).Result;
             //var image = Image.FromStream(stream);
             //image.Save("test.jpg");
-            var users = new SpydusUser[6];
+            SpydusUser[] users = null;
 
             while (true)
             {
                 var library = string.Empty;
                 do
                 {
-                    Console.Write("Enter (s)alford or (m)anchester, or (q)uit: ");
+                    Console.Write("Enter (s)alford or (m)anchester or (b)ury, or (q)uit: ");
                     library = Console.ReadLine();
-                } while (library != "m" && library != "s" && library != "q");
+                } while (library != "m" && library != "s" && library != "q" && library != "b");
 
                 if (library == "q")
                 {
@@ -148,6 +148,7 @@ namespace MyLibraryConsoleApp
 
                 if (library == "m")
                 {
+                    users = new SpydusUser[6];
                     users[0] = new SpydusUser("D9999010826037", "0205", "manchester", tracingService);
                     users[1] = new SpydusUser("D9999010723465", "0604", "manchester", tracingService);
                     users[2] = new SpydusUser("D9999010821966", "2017", "manchester", tracingService);
@@ -158,12 +159,23 @@ namespace MyLibraryConsoleApp
 
                 if (library == "s")
                 {
+                    users = new SpydusUser[6];
                     users[0] = new SpydusUser("000252967X", "5741", "salfordlibraries", tracingService);
                     users[1] = new SpydusUser("0002554887", "2011", "salfordlibraries", tracingService);
                     users[2] = new SpydusUser("0002554631", "2013", "salfordlibraries", tracingService);
                     users[3] = new SpydusUser("000286388X", "2017", "salfordlibraries", tracingService);
                     users[4] = new SpydusUser("0003252205", "2020", "salfordlibraries", tracingService);
                     users[5] = new SpydusUser("0003341127", "1986", "salfordlibraries", tracingService);
+                }
+
+                if (library == "b")
+                {
+                    users = new SpydusUser[5];
+                    users[0] = new SpydusUser("5000566828", "Password1", "bury", tracingService);
+                    users[1] = new SpydusUser("5000614207", "Password1", "bury", tracingService);
+                    users[2] = new SpydusUser("5000822622", "Password1", "bury", tracingService);
+                    users[3] = new SpydusUser("500072087X", "Password1", "bury", tracingService);
+                    users[4] = new SpydusUser("5000720888", "Password1", "bury", tracingService);
                 }
 
                 var action = string.Empty;

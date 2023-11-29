@@ -20,7 +20,7 @@ namespace MyLibrary
 
         public override string ToString()
         {
-            return this._renewalText + " due on " + _dueDate;
+            return this._renewalText + " due on " + _dueDate.ToShortDateString();
         }
     }
 
